@@ -36,11 +36,25 @@ const getInitialState = (): AppState => {
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(getInitialState);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [showSettings, setShowSettings] = useState(false);
+  const [tempKey, setTempKey] = useState('');
 
   // Persistence
   useEffect(() => {
     localStorage.setItem('bariatric_app_state', JSON.stringify(state));
   }, [state]);
+
+  const saveApiKey = () => {
+    localStorage.setItem('gemini_api_key', tempKey.trim());
+    setApiKey(tempKey.trim());
+    setShowSettings(false);
+  };
+
+  const openSettings = () => {
+    setTempKey(apiKey);
+    setShowSettings(true);
+  }
 
   const getCurrentLog = (): DailyLog => {
     return state.logs[state.currentDay] || {
@@ -141,7 +155,55 @@ const App: React.FC = () => {
   const currentLog = getCurrentLog();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 pb-20 font-sans">
+    <div className="min-h-screen bg-slate-900 text-slate-100 pb-20 font-sans relative">
+      
+      {/* Settings Button */}
+      <button 
+        onClick={openSettings}
+        className="absolute top-4 right-4 z-50 p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full border border-slate-700"
+      >
+        <Icons.Settings className="w-5 h-5" />
+      </button>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <h3 className="text-xl font-bold text-white mb-2">Configurar IA</h3>
+                <p className="text-sm text-slate-400 mb-4">
+                    Para usar a estimativa de calorias por IA, você precisa de uma API Key do Google Gemini.
+                </p>
+                <div className="space-y-3">
+                    <label className="block text-xs font-bold text-slate-500 uppercase">Sua Chave de API (Começa com AIza...)</label>
+                    <input 
+                        type="text" 
+                        value={tempKey}
+                        onChange={(e) => setTempKey(e.target.value)}
+                        placeholder="Cole sua chave aqui..."
+                        className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-indigo-500 font-mono text-sm"
+                    />
+                    <div className="flex justify-end gap-3 mt-4">
+                        <button 
+                            onClick={() => setShowSettings(false)}
+                            className="px-4 py-2 text-slate-400 font-medium hover:text-white"
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            onClick={saveApiKey}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-500"
+                        >
+                            Salvar Chave
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                        Sua chave fica salva apenas no seu navegador.
+                    </p>
+                </div>
+            </div>
+        </div>
+      )}
+
       <DaySelector 
         currentDay={state.currentDay} 
         onSelectDay={handleSelectDay}
@@ -175,6 +237,7 @@ const App: React.FC = () => {
                         onToggleItem={handleToggleItem}
                         onAddCustomItem={handleAddCustomItem}
                         onRemoveCustomItem={handleRemoveCustomItem}
+                        apiKey={apiKey}
                     />
                 ))}
             </div>

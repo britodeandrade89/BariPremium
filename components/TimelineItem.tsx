@@ -10,6 +10,7 @@ interface TimelineItemProps {
   onToggleItem: (itemId: string, calories: number) => void;
   onAddCustomItem?: (eventId: string, item: { name: string; calories: number }) => void;
   onRemoveCustomItem?: (itemId: string, calories: number) => void;
+  apiKey: string;
 }
 
 const TimelineItem: React.FC<TimelineItemProps> = ({ 
@@ -18,7 +19,8 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
   customItems = [], 
   onToggleItem,
   onAddCustomItem,
-  onRemoveCustomItem
+  onRemoveCustomItem,
+  apiKey
 }) => {
   const [customInput, setCustomInput] = useState('');
   const [isEstimating, setIsEstimating] = useState(false);
@@ -55,12 +57,14 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
     setAiResult(null);
 
     try {
-      // Ensure API key is available
-      if (!process?.env?.API_KEY) {
-        throw new Error("Chave da API não configurada.");
+      // Use the provided API key or fallback to env for dev
+      const key = apiKey || process?.env?.API_KEY;
+      
+      if (!key) {
+        throw new Error("Chave de API não configurada. Clique na engrenagem no topo para adicionar.");
       }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: key });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Identifique o alimento e estime as calorias totais de: '${customInput}'. Responda APENAS o JSON com nome curto e calorias.`,
@@ -85,7 +89,7 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
       }
     } catch (error: any) {
       console.error("Error estimating calories:", error);
-      alert(`Erro na IA: ${error.message || "Falha na conexão"}`);
+      alert(`${error.message || "Erro na conexão com IA"}`);
     } finally {
       setIsEstimating(false);
     }
