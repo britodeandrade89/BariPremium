@@ -7,6 +7,7 @@ import HydrationCard from './components/HydrationCard';
 import WeightCard from './components/WeightCard';
 import TimelineItem from './components/TimelineItem';
 import { Icons } from './components/Icons';
+import { firebaseConfig } from './firebase'; // Import Firebase Config
 
 const INITIAL_WEIGHT = 95.0;
 
@@ -36,7 +37,8 @@ const getInitialState = (): AppState => {
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(getInitialState);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  // Priority: 1. Manual User Key (localStorage) -> 2. Firebase Config Key
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || firebaseConfig.apiKey || '');
   const [showSettings, setShowSettings] = useState(false);
   const [tempKey, setTempKey] = useState('');
 
@@ -46,13 +48,19 @@ const App: React.FC = () => {
   }, [state]);
 
   const saveApiKey = () => {
-    localStorage.setItem('gemini_api_key', tempKey.trim());
-    setApiKey(tempKey.trim());
+    const cleanedKey = tempKey.trim();
+    if (cleanedKey.length > 0 && !cleanedKey.startsWith('AIza')) {
+        alert("Atenção: A chave parece incorreta. Uma API Key do Google geralmente começa com as letras 'AIza'.");
+    }
+    
+    localStorage.setItem('gemini_api_key', cleanedKey);
+    setApiKey(cleanedKey);
     setShowSettings(false);
   };
 
   const openSettings = () => {
-    setTempKey(apiKey);
+    // If we have a stored key, show it. If not, but we have a firebase key, suggest it but don't force it in the input yet.
+    setTempKey(localStorage.getItem('gemini_api_key') || '');
     setShowSettings(true);
   }
 
@@ -171,15 +179,19 @@ const App: React.FC = () => {
             <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
                 <h3 className="text-xl font-bold text-white mb-2">Configurar IA</h3>
                 <p className="text-sm text-slate-400 mb-4">
-                    Para usar a estimativa de calorias por IA, você precisa de uma API Key do Google Gemini.
+                    Para usar a estimativa de calorias, você precisa de uma API Key.
+                    <br/>
+                    <span className="text-xs text-green-400 block mt-2">
+                        {firebaseConfig.apiKey ? "✓ Chave do Firebase detectada e em uso." : ""}
+                    </span>
                 </p>
                 <div className="space-y-3">
-                    <label className="block text-xs font-bold text-slate-500 uppercase">Sua Chave de API (Começa com AIza...)</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase">Sua Chave de API (Opcional se usar Firebase)</label>
                     <input 
                         type="text" 
                         value={tempKey}
                         onChange={(e) => setTempKey(e.target.value)}
-                        placeholder="Cole sua chave aqui..."
+                        placeholder={firebaseConfig.apiKey ? "Usando chave do Firebase..." : "Cole sua chave AIza... aqui"}
                         className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-indigo-500 font-mono text-sm"
                     />
                     <div className="flex justify-end gap-3 mt-4">
@@ -193,12 +205,9 @@ const App: React.FC = () => {
                             onClick={saveApiKey}
                             className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-500"
                         >
-                            Salvar Chave
+                            Salvar Chave Manual
                         </button>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                        Sua chave fica salva apenas no seu navegador.
-                    </p>
                 </div>
             </div>
         </div>

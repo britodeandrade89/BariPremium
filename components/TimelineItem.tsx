@@ -89,7 +89,20 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
       }
     } catch (error: any) {
       console.error("Error estimating calories:", error);
-      alert(`${error.message || "Erro na conexão com IA"}`);
+      
+      let friendlyMessage = "Não foi possível conectar com a IA.";
+      const errorMessage = error.message || JSON.stringify(error);
+      
+      if (errorMessage.includes("API key not valid") || errorMessage.includes("API_KEY_INVALID")) {
+        friendlyMessage = "Sua Chave de API é inválida. Clique na engrenagem no topo e insira uma chave que comece com 'AIza'.";
+      } else if (errorMessage.includes("Failed to fetch")) {
+        friendlyMessage = "Erro de conexão. Verifique sua internet.";
+      } else {
+        // Attempt to parse complicated google errors
+        friendlyMessage = "Erro ao processar. Verifique se a chave está correta.";
+      }
+
+      alert(friendlyMessage);
     } finally {
       setIsEstimating(false);
     }
