@@ -73,7 +73,9 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
       });
 
       if (response.text) {
-        const data = JSON.parse(response.text);
+        // Clean up markdown code blocks if present
+        const text = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const data = JSON.parse(text);
         setAiResult({ name: data.foodName, calories: data.calories });
       }
     } catch (error) {
@@ -267,28 +269,41 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
                     </div>
                 ) : (
                     <div className="bg-indigo-900/20 border border-indigo-500/50 rounded-xl p-3 animate-in fade-in zoom-in duration-300">
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="space-y-3 mb-3">
                             <div>
-                                <div className="text-xs text-indigo-300 uppercase font-bold">IA Identificou:</div>
-                                <div className="text-white font-medium">{aiResult.name}</div>
+                                <label className="block text-[10px] text-indigo-300 uppercase font-bold mb-1">O que identificamos:</label>
+                                <input 
+                                    type="text" 
+                                    value={aiResult.name}
+                                    onChange={(e) => setAiResult(prev => prev ? ({...prev, name: e.target.value}) : null)}
+                                    className="w-full bg-slate-800 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                />
                             </div>
-                            <div className="text-right">
-                                <div className="text-2xl font-bold text-white">{aiResult.calories}</div>
-                                <div className="text-xs text-indigo-300">kcal</div>
+                            <div>
+                                <label className="block text-[10px] text-indigo-300 uppercase font-bold mb-1">Calorias Estimadas:</label>
+                                <div className="relative">
+                                    <input 
+                                        type="number" 
+                                        value={aiResult.calories}
+                                        onChange={(e) => setAiResult(prev => prev ? ({...prev, calories: Number(e.target.value)}) : null)}
+                                        className="w-full bg-slate-800 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                    />
+                                    <span className="absolute right-3 top-2 text-sm text-slate-500">kcal</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex gap-2">
                              <button 
                                 onClick={() => { setAiResult(null); setCustomInput(''); }}
-                                className="flex-1 py-2 text-xs font-bold text-slate-400 hover:text-white bg-slate-800 rounded-lg"
+                                className="flex-1 py-2 text-xs font-bold text-slate-400 hover:text-white bg-slate-800 rounded-lg transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button 
                                 onClick={confirmAddCustomItem}
-                                className="flex-1 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20"
+                                className="flex-1 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20 transition-colors"
                             >
-                                Adicionar ao Diário
+                                Adicionar
                             </button>
                         </div>
                     </div>
