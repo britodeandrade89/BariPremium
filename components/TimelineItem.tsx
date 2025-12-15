@@ -55,6 +55,11 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
     setAiResult(null);
 
     try {
+      // Ensure API key is available
+      if (!process?.env?.API_KEY) {
+        throw new Error("Chave da API não configurada.");
+      }
+
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -78,9 +83,9 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
         const data = JSON.parse(text);
         setAiResult({ name: data.foodName, calories: data.calories });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error estimating calories:", error);
-      alert("Erro ao conectar com a IA. Tente novamente.");
+      alert(`Erro na IA: ${error.message || "Falha na conexão"}`);
     } finally {
       setIsEstimating(false);
     }
